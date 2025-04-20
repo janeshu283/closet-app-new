@@ -53,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     
     try {
+      await _closetService.loadItems();
       final allItems = await _closetService.getAllItems();
       final allOutfits = await _outfitService.getAllOutfits();
     

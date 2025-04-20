@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/catalog_item.dart';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
@@ -97,13 +98,32 @@ class SupabaseService {
     return response;
   }
   
-  // コーディネートを追加
+  // コーディネートを追加 (直接挿入)
   Future<Map<String, dynamic>> addOutfit(Map<String, dynamic> outfit, List<String> itemIds) async {
-    // トランザクションを使用してコーディネートとアイテムの関連付けを一度に行う
-    return await client.rpc('create_outfit', params: {
-      'outfit_data': outfit,
-      'item_ids': itemIds
-    }).single();
+    // 'notes', 'season', 'occasion' はテーブルに存在しないため除外
+    final payload = Map<String, dynamic>.from(outfit)
+      ..remove('notes')
+      ..remove('season')
+      ..remove('occasion')
+      ..removeWhere((key, value) => value == null);
+    // outfits テーブルにコーディネートを追加
+    final insertedOutfit = await client
+      .from('outfits')
+      .insert(payload)
+      .select()
+      .single() as Map<String, dynamic>;
+    final outfitId = insertedOutfit['id'] as String;
+    // outfit_items テーブルに関連アイテムを追加
+    final itemsData = itemIds.map((id) => {
+      'outfit_id': outfitId,
+      'clothing_item_id': id,
+    }).toList();
+    final insertedItems = await client
+      .from('outfit_items')
+      .insert(itemsData)
+      .select('clothing_item_id') as List<dynamic>;
+    // 作成済みコーディネート情報 + 挿入済みアイテムリストを返却
+    return {...insertedOutfit, 'items': insertedItems};
   }
   
   // コーディネートを更新
@@ -166,5 +186,18 @@ class SupabaseService {
         .gte('min_temperature', temperature);
     
     return response;
+  }
+  
+  // カタログアイテム検索
+  Future<List<CatalogItem>> searchCatalogItems(String pattern) async {
+    final data = await client
+      .from('catalog_items')
+      .select()
+      .ilike('name', '%$pattern%')
+      .limit(10)
+      .order('name', ascending: true);
+    return List<Map<String, dynamic>>.from(data)
+      .map((e) => CatalogItem.fromJson(e))
+      .toList();
   }
 }

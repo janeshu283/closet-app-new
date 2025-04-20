@@ -4,6 +4,8 @@ import 'screens/home_screen.dart';
 import 'screens/item_list_screen.dart';
 import 'screens/outfit_list_screen.dart';
 import 'screens/weather_suggestion_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/auth_screen.dart';
 import 'theme/app_theme.dart';
 import 'services/supabase_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -40,8 +42,22 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return ScaffoldMessenger(child: child!);
       },
-      home: const MainScreen(),
+      home: const AuthOrMain(),
     );
+  }
+}
+
+class AuthOrMain extends StatelessWidget {
+  const AuthOrMain({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      return const MainScreen();
+    } else {
+      return const AuthScreen();
+    }
   }
 }
 
@@ -60,6 +76,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     const ItemListScreen(),
     const OutfitListScreen(),
     const WeatherSuggestionScreen(),
+    const ProfileScreen(),
   ];
   
   @override
@@ -83,6 +100,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
           BottomNavigationBarItem(icon: Icon(CupertinoIcons.checkmark_square), label: 'アイテム'),
           BottomNavigationBarItem(icon: Icon(CupertinoIcons.person_2_square_stack), label: 'コーデ'),
           BottomNavigationBarItem(icon: Icon(CupertinoIcons.sun_max), label: '天気コーデ'),
+          BottomNavigationBarItem(icon: Icon(CupertinoIcons.person), label: 'プロフィール'),
         ],
       ),
       tabBuilder: (context, index) {
@@ -95,6 +113,8 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
             return const OutfitListScreen();
           case 3:
             return const WeatherSuggestionScreen();
+          case 4:
+            return const ProfileScreen();
           default:
             return const HomeScreen();
         }

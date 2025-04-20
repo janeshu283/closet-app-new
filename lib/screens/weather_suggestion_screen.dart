@@ -228,12 +228,10 @@ class _WeatherSuggestionScreenState extends State<WeatherSuggestionScreen> {
           _buildWeatherForecast(),
           
           // 提案されたコーディネート
-          if (_suggestedOutfits.isNotEmpty)
-            _buildSuggestedOutfits(),
+          _buildSuggestedOutfits(),
           
           // 提案されたアイテム
-          if (_suggestedItems.isNotEmpty)
-            _buildSuggestedItems(),
+          _buildSuggestedItems(),
           
           const SizedBox(height: 24),
         ],

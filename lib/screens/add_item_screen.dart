@@ -3,10 +3,13 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/clothing_item.dart';
+import '../models/catalog_item.dart';
 import '../services/closet_service_supabase.dart';
 import '../services/image_service.dart';
+import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 
 class AddItemScreen extends StatefulWidget {
@@ -127,20 +130,30 @@ class _AddItemScreenState extends State<AddItemScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // 必須情報セクション
-                              _buildSectionTitle('基本情報', Icons.info_outline),
-                              const SizedBox(height: 16),
-
-                              TextFormField(
-                                controller: _nameController,
-                                decoration: InputDecoration(
-                                  labelText: 'アイテム名 *',
-                                  hintText: '例：白Tシャツ',
-                                  prefixIcon: const Icon(Icons.label),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                              TypeAheadFormField<CatalogItem>(
+                                textFieldConfiguration: TextFieldConfiguration(
+                                  controller: _nameController,
+                                  decoration: InputDecoration(
+                                    labelText: 'アイテム名 *',
+                                    hintText: '例：白Tシャツ',
+                                    prefixIcon: const Icon(Icons.label),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
+                                suggestionsCallback: (pattern) => SupabaseService().searchCatalogItems(pattern),
+                                itemBuilder: (context, item) => ListTile(
+                                  title: Text(item.name),
+                                ),
+                                onSuggestionSelected: (item) {
+                                  setState(() {
+                                    _nameController.text = item.name;
+                                    _brandController.text = item.brand;
+                                    _selectedCategory = item.category ?? _selectedCategory;
+                                    _imagePath = item.imageUrl;
+                                  });
+                                },
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
                                     return 'アイテム名を入力してください';
@@ -157,10 +170,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
                               // 色選択
                               _buildColorSelector(),
                               const SizedBox(height: 24),
-
-                              // 追加情報セクション
-                              _buildSectionTitle('追加情報', Icons.more_horiz),
-                              const SizedBox(height: 16),
 
                               TextFormField(
                                 controller: _brandController,

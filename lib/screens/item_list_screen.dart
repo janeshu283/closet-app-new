@@ -1,8 +1,10 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Colors;
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/clothing_item.dart';
 import '../services/closet_service_supabase.dart';
 import '../services/image_service.dart';
@@ -21,6 +23,7 @@ class ItemListScreen extends StatefulWidget {
 class _ItemListScreenState extends State<ItemListScreen> {
   final ClosetServiceSupabase _closetService = ClosetServiceSupabase();
   final ImageService _imageService = ImageService();
+  late final StreamSubscription<List<Map<String, dynamic>>> _itemsSubscription;
   
   List<ClothingItem> _items = [];
   
@@ -34,6 +37,10 @@ class _ItemListScreenState extends State<ItemListScreen> {
   void initState() {
     super.initState();
     _loadItems();
+    _itemsSubscription = Supabase.instance.client
+      .from('clothing_items')
+      .stream(primaryKey: ['id'])
+      .listen((_) => _loadItems());
   }
   
   Future<void> _loadItems() async {
@@ -236,5 +243,11 @@ class _ItemListScreenState extends State<ItemListScreen> {
     );
     
     _loadItems();
+  }
+
+  @override
+  void dispose() {
+    _itemsSubscription.cancel();
+    super.dispose();
   }
 }

@@ -34,7 +34,7 @@ class ClosetServiceSupabase {
       print('Error loading items from Supabase: $e');
       _cachedItems = [];
     }
-    // 常にサンプルアイテムを重複なく追加
+    // 常にサンプルアイテムを重複なく追加（DBに存在しない場合は挿入）
     final sampleItems = <ClothingItem>[
       ClothingItem(
         name: 'エアリズムコットンT',
@@ -67,7 +67,9 @@ class ClosetServiceSupabase {
     ];
     for (final sample in sampleItems) {
       if (!_cachedItems.any((item) => item.name == sample.name)) {
-        _cachedItems.add(sample);
+        final result = await _supabaseService.addClothingItem(sample.toJson());
+        final newItem = ClothingItem.fromSupabase(result);
+        _cachedItems.add(newItem);
       }
     }
     // ローカルにバックアップ
